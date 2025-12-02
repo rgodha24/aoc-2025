@@ -4,7 +4,6 @@ pub fn part_one(input: &str) -> Option<usize> {
     let mut dial = 50i64;
     let mut cnt = 0;
     for line in input.lines() {
-        dbg!(line);
         if line.chars().next().unwrap() == 'R' {
             let amt: i64 = line[1..].parse().unwrap();
             dial = (dial + amt).rem_euclid(100);
@@ -12,7 +11,6 @@ pub fn part_one(input: &str) -> Option<usize> {
             let amt: i64 = line[1..].parse().unwrap();
             dial = (dial - amt).rem_euclid(100);
         }
-        dbg!(dial);
         if dial == 0 {
             cnt += 1;
         }
@@ -26,7 +24,6 @@ pub fn part_two(input: &str) -> Option<usize> {
     for line in input.lines() {
         let prev = dial;
         let new;
-        dbg!((line, dial, cnt));
         if line.chars().next().unwrap() == 'R' {
             let amt: i64 = line[1..].parse().unwrap();
 
@@ -35,13 +32,10 @@ pub fn part_two(input: &str) -> Option<usize> {
             let amt: i64 = line[1..].parse().unwrap();
             new = prev - amt;
         }
-        dbg!((new, prev));
         if new.signum() != prev.signum() && prev != 0 {
-            println!("adding one bc sign change");
             cnt += 1;
         }
         cnt += new.abs() / 100;
-        println!("adding {} ", new.abs() / 100);
         dial = new.rem_euclid(100);
     }
     Some(cnt as usize)

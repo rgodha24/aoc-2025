@@ -1,59 +1,68 @@
 advent_of_code::solution!(2);
+use advent_of_code::helpers::*;
+use itertools::Itertools;
+
+const POWERSOF10: [u64; 11] = [
+    1,
+    10,
+    100,
+    1_000,
+    10_000,
+    100_000,
+    1_000_000,
+    10_000_000,
+    100_000_000,
+    1_000_000_000,
+    10_000_000_000,
+];
 
 pub fn part_one(input: &str) -> Option<u64> {
-    let mut invalid = Vec::new();
+    let mut sum = 0;
     for line in input.lines() {
-        for range in line.split(",") {
-            if range.is_empty() {
-                continue;
-            }
-            let (lwoer, upper) = range.split_once('-').unwrap();
-            let (lower, upper) = (lwoer.parse::<u64>().unwrap(), upper.parse::<u64>().unwrap());
-            for id in lower..=upper {
-                let ids = id.to_string();
+        for range in line.trim().split(",") {
+            let (lower, upper) = range.trim().split_once('-').unwrap();
+            let (lower, upper) = (lower.parse::<u64>().unwrap(), upper.parse::<u64>().unwrap());
 
-                if ids.is_empty() {
+            for id in lower..=upper {
+                let digs = digits(id);
+                if digs % 2 == 1 {
+                    // TODO: figure out why this doesnt work lol (obv with a while loop instead of a for loop)
+                    // id = POWERSOF10[digs as usize + 1];
                     continue;
                 }
-                let id = ids.as_bytes();
-                if id[..id.len() / 2] == id[id.len() / 2..] {
-                    invalid.push(ids.parse::<u64>().unwrap());
+
+                let factor = POWERSOF10[digs as usize / 2];
+                if id / factor == id % factor {
+                    sum += id;
                 }
             }
         }
     }
 
-    Some(invalid.iter().sum())
+    Some(sum)
 }
 
 pub fn part_two(input: &str) -> Option<u64> {
-    let mut invalid = Vec::new();
+    let mut sum = 0;
     for line in input.lines() {
-        for range in line.split(",") {
-            if range.is_empty() {
-                continue;
-            }
-            let (lwoer, upper) = range.split_once('-').unwrap();
-            let (lower, upper) = (lwoer.parse::<u64>().unwrap(), upper.parse::<u64>().unwrap());
-            for id in lower..=upper {
-                let ids = id.to_string();
+        for range in line.trim().split(",") {
+            let (lower, upper) = range.trim().split_once('-').unwrap();
+            let (lower, upper) = (lower.parse::<u64>().unwrap(), upper.parse::<u64>().unwrap());
 
-                if ids.is_empty() {
-                    continue;
-                }
-                let id = ids.as_bytes();
-                for size in 1..id.len() {
-                    if id.len() % size != 0 {
+            for id in lower..=upper {
+                let digs = digits(id) as usize;
+                for size in 1..digs {
+                    if digs % size != 0 {
                         continue;
                     }
-                    if (0..(id.len() / size))
-                        .map(|n| n * size)
-                        .map(|i| &id[i..i + size])
-                        .collect::<Vec<_>>()
-                        .windows(2)
-                        .all(|w| w[0] == w[1])
+
+                    let factor = POWERSOF10[size];
+                    if (0..(digs / size))
+                        .map(|i| (id / POWERSOF10[size * i]) % factor)
+                        .tuple_windows()
+                        .all(|(a, b)| a == b)
                     {
-                        invalid.push(ids.parse::<u64>().unwrap());
+                        sum += id;
                         break;
                     }
                 }
@@ -61,7 +70,7 @@ pub fn part_two(input: &str) -> Option<u64> {
         }
     }
 
-    Some(invalid.iter().sum())
+    Some(sum)
 }
 
 #[cfg(test)]
