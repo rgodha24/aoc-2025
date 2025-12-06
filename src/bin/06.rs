@@ -2,39 +2,36 @@ advent_of_code::solution!(6);
 use advent_of_code::helpers::*;
 use itertools::Itertools;
 
-pub fn part_one(input: &str) -> Option<usize> {
+pub fn part_one(input: &str) -> Option<u64> {
     let mut lines = input.lines().collect_vec();
-    let last = lines.pop().unwrap();
-    let mut nums = vec![Vec::<usize>::new(); lines[0].split_whitespace().count()];
+    let ops = lines.pop().unwrap();
+    let ops = ops.split_whitespace().collect_vec();
 
-    for line in lines {
-        for (i, num) in line
-            .split_whitespace()
-            .enumerate()
-            .map(|(i, x)| (i, x.parse::<usize>().unwrap()))
-        {
-            nums[i].push(num);
-        }
-    }
+    let nums = lines
+        .into_iter()
+        .map(|line| {
+            line.split_whitespace()
+                .map(|x| x.parse::<usize>().unwrap())
+                .collect_vec()
+        })
+        .collect_vec();
+    let nums = transpose(nums);
 
-    let ops = last.split_whitespace().collect_vec();
-
-    let mut sum = 0usize;
-
-    for (i, op) in ops.into_iter().enumerate() {
-        match op {
-            "+" => sum += nums[i].iter().copied().sum::<usize>(),
-            "*" => sum += nums[i].iter().copied().product::<usize>(),
-            _ => {}
-        }
-    }
-
-    Some(sum)
+    Some(
+        ops.into_iter()
+            .zip(nums)
+            .map(|(op, nums)| match op {
+                "+" => nums.iter().copied().sum::<usize>() as u64,
+                "*" => nums.iter().copied().product::<usize>() as u64,
+                _ => 0,
+            })
+            .sum(),
+    )
 }
 
-pub fn part_two(input: &str) -> Option<usize> {
+pub fn part_two(input: &str) -> Option<u64> {
     let mut lines = input.lines().collect_vec();
-    let mut last = lines.pop().unwrap().chars().enumerate();
+    let mut ops = lines.pop().unwrap().chars().enumerate();
     let lines = lines
         .into_iter()
         .map(|x| x.chars().collect_vec())
@@ -42,27 +39,32 @@ pub fn part_two(input: &str) -> Option<usize> {
 
     let mut prev_op = None;
     let mut nums = Vec::new();
-    let mut sum = 0usize;
-    while let Some((i, last_char)) = last.next() {
-        if matches!(last_char, '+' | '*') {
-            dbg!(&nums);
+    let mut sum = 0u64;
+    loop {
+        let op = ops.next();
+        if matches!(op, None | Some((_, '+' | '*'))) {
             match prev_op {
                 Some('+') => {
-                    sum += nums.iter().copied().sum::<usize>();
+                    sum += nums.iter().copied().sum::<u64>();
                 }
                 Some('*') => {
-                    sum += nums.iter().copied().product::<usize>();
+                    sum += nums.iter().copied().product::<u64>();
                 }
                 _ => {}
             }
-            prev_op = Some(last_char);
-            nums = Vec::new();
+            nums.clear();
+            if let Some((_, last_char)) = op {
+                prev_op = Some(last_char);
+            } else {
+                break;
+            }
         }
+        let i = op.unwrap().0;
 
         let mut num = 0;
         for line in lines.iter() {
             match line[i].to_digit(10) {
-                Some(x) => num = num * 10 + x as usize,
+                Some(x) => num = num * 10 + x as u64,
                 None => {}
             }
         }
@@ -70,41 +72,8 @@ pub fn part_two(input: &str) -> Option<usize> {
             nums.push(num);
         }
     }
-    dbg!(&nums);
-    match prev_op {
-        Some('+') => {
-            sum += nums.iter().copied().sum::<usize>();
-        }
-        Some('*') => {
-            sum += nums.iter().copied().product::<usize>();
-        }
-        _ => {}
-    }
+
     return Some(sum);
-
-    // for line in lines {
-    //     for (i, num) in line
-    //         .split_whitespace()
-    //         .enumerate()
-    //         .map(|(i, x)| (i, x.parse::<usize>().unwrap()))
-    //     {
-    //         nums[i].push(num);
-    //     }
-    // }
-    //
-    // let ops = last.split_whitespace().collect_vec();
-    //
-    // let mut sum = 0usize;
-    //
-    // for (i, op) in ops.into_iter().enumerate() {
-    //     match op {
-    //         "+" => sum += nums[i].iter().copied().sum::<usize>(),
-    //         "*" => sum += nums[i].iter().copied().product::<usize>(),
-    //         _ => {}
-    //     }
-    // }
-
-    // Some(sum)
 }
 
 #[cfg(test)]
@@ -114,12 +83,12 @@ mod tests {
     #[test]
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(4277556));
     }
 
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(3263827));
     }
 }

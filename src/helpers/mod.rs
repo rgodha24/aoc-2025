@@ -56,3 +56,17 @@ macro_rules! tiles {
         }
     };
 }
+
+/// converts something like: [[101, 102, 103, 104], [201, 202, 203]]
+/// into [[101, 201], [102, 202], [103, 203], [104]]
+pub fn transpose<T: Clone>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
+    let largest = v.iter().map(|x| x.len()).max().unwrap_or(0);
+    let mut new = vec![Vec::with_capacity(v.len()); largest];
+    for row in v.into_iter() {
+        for (i, item) in row.into_iter().enumerate() {
+            new[i].push(item);
+        }
+    }
+
+    new
+}
