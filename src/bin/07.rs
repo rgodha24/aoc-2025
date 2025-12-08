@@ -1,8 +1,6 @@
 advent_of_code::solution!(7);
-use std::collections::{HashMap, HashSet};
-
 use advent_of_code::helpers::*;
-use itertools::Itertools;
+use std::collections::{HashMap, HashSet};
 
 tiles!('.' => Empty, '^' => Splitter, 'S' => Start);
 
@@ -27,7 +25,6 @@ pub fn part_one(input: &str) -> Option<i64> {
 
         splitters = new_splitters;
     }
-    dbg!(&splitters);
     Some(splits)
 }
 
@@ -58,22 +55,6 @@ pub fn part_two(input: &str) -> Option<i64> {
     let start = grid.find(Tile::Start).next().unwrap();
     let mut cache = HashMap::new();
     return Some(dfs(&grid, start, &mut cache) as i64);
-    // splitters.push(start);
-    // while grid.contains_point(splitters.iter().next().unwrap().clone()) {
-    //     let mut new_splitters = Vec::new();
-    //     for point in splitters {
-    //         let below = point + Direction::Down;
-    //         if matches!(grid.get(below), Some(Tile::Splitter)) {
-    //             new_splitters.push(below + Direction::Right);
-    //             new_splitters.push(below + Direction::Left);
-    //         } else {
-    //             new_splitters.push(below);
-    //         }
-    //     }
-    //
-    //     splitters = new_splitters;
-    // }
-    // Some(splitters.len() as i64)
 }
 
 #[cfg(test)]
