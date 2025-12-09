@@ -1,9 +1,6 @@
 advent_of_code::solution!(9);
-use std::{cmp, collections::HashSet};
-
 use advent_of_code::helpers::*;
 use itertools::Itertools;
-use num::integer::gcd;
 
 tiles!('.' => Empty, 'X' => Green,  '#' => Red);
 
@@ -22,19 +19,36 @@ pub fn part_one(input: &str) -> Option<i64> {
     )
 }
 
-fn point_in_rect(recta: SignedPoint, rectb: SignedPoint, point: SignedPoint) -> bool {
-    let SignedPoint { x: ax, y: ay } = recta;
-    let SignedPoint { x: bx, y: by } = rectb;
-    let SignedPoint { x: px, y: py } = point;
-    ((ax <= px) && (px <= bx) || (ax >= px) && (px >= bx))
-        && ((ay <= py) && (py <= by) || (ay >= py) && (py >= by))
-}
-
 pub fn part_two(input: &str) -> Option<i64> {
     let points = input
         .lines()
         .map(|line| SignedPoint::from_delimited(line, ",").unwrap())
         .collect_vec();
+
+    fn clip_edge(
+        subject: Vec<SignedPoint>,
+        is_inside: impl Fn(SignedPoint) -> bool,
+        get_intersection: impl Fn(SignedPoint) -> SignedPoint,
+    ) -> Vec<SignedPoint> {
+        let mut output = Vec::new();
+        if subject.is_empty() {
+            return output;
+        }
+
+        let mut s = *subject.last().unwrap();
+        for &e in &subject {
+            if is_inside(e) {
+                if !is_inside(s) {
+                    output.push(get_intersection(s));
+                }
+                output.push(e);
+            } else if is_inside(s) {
+                output.push(get_intersection(s));
+            }
+            s = e;
+        }
+        output
+    }
 
     let ans = points
         .iter()
@@ -46,32 +60,33 @@ pub fn part_two(input: &str) -> Option<i64> {
             let maxx = a.x.max(b.x);
             let maxy = a.y.max(b.y);
 
-            let vertices = points
-                .iter()
-                .cloned()
-                .map(|p| SignedPoint::new(p.x.max(minx).min(maxx), p.y.max(miny).min(maxy)))
-                .unique()
-                .collect_vec();
+            let mut poly = points.clone();
 
-            let shoelace = vertices
+            poly = clip_edge(poly, |p| p.x >= minx, |s| SignedPoint::new(minx, s.y));
+            poly = clip_edge(poly, |p| p.x <= maxx, |s| SignedPoint::new(maxx, s.y));
+            poly = clip_edge(poly, |p| p.y >= miny, |s| SignedPoint::new(s.x, miny));
+            poly = clip_edge(poly, |p| p.y <= maxy, |s| SignedPoint::new(s.x, maxy));
+
+            if poly.len() > 1 && poly.first() == poly.last() {
+                poly.pop();
+            }
+
+            let shoelace = poly
                 .iter()
-                .copied()
                 .circular_tuple_windows()
-                .map(|(a, b)| (a.x * b.y - (a.y * b.x)))
+                .map(|(p1, p2)| p1.x * p2.y - p1.y * p2.x)
                 .sum::<i64>()
                 .abs()
                 / 2;
-            let lattice = vertices
+            let perim = poly
                 .iter()
-                .copied()
-                .chain(std::iter::once(vertices[0]))
-                .tuple_windows()
-                .map(|(a, b)| gcd(b.x - a.x, b.y - a.y))
+                .circular_tuple_windows()
+                .map(|(p1, p2)| (p1.x - p2.x).abs() + (p1.y - p2.y).abs())
                 .sum::<i64>();
 
-            let max_area = ((a.x - b.x).abs() + 1) * ((a.y - b.y).abs() + 1);
-            let area = shoelace + lattice / 2 + 1;
-            println!("area between {a} and {b} is {area}. max area is {max_area}");
+            let area = shoelace + perim / 2 + 1;
+            let max_area = ((maxx - minx).abs() + 1) * ((maxy - miny).abs() + 1);
+
             (area == max_area).then_some(area)
         })
         .max();
