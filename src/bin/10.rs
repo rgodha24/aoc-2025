@@ -118,28 +118,45 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(sum)
 }
 
-fn dfs2(state: &mut [i64], buttons: &[Vec<usize>], max_depth: usize, depth: usize) -> usize {
-    if depth > max_depth || state.iter().any(|&s| s < 0) {
-        return usize::MAX;
+fn dfs2(
+    state: &mut [i64],
+    buttons: &[Vec<usize>],
+    mut max_depth: usize,
+    depth: usize,
+    cooked_states: &mut FxHashSet<Vec<i64>>,
+) -> Option<usize> {
+    if state.iter().any(|&s| s < 0) {
+        return None;
+    }
+    if depth > max_depth {
+        return Some(usize::MAX);
     }
     if state.iter().all(|&s| s == 0) {
-        return depth;
+        return Some(depth);
     }
 
-    return buttons
+    buttons
         .iter()
-        .map(|button| {
+        .filter_map(|button| {
             for i in button {
                 state[*i] -= 1;
             }
-            let result = dfs2(state, buttons, max_depth, depth + 1);
+            let result = dfs2(state, buttons, max_depth, depth + 1, cooked_states);
             for i in button {
                 state[*i] += 1;
+            }
+            if let Some(result) = result {
+                if result < max_depth {
+                    max_depth = result;
+                    println!("setting max_depth to {max_depth}");
+                }
+                max_depth = max_depth.min(result)
+            } else {
+                cooked_states.insert(state.to_owned());
             }
             result
         })
         .min()
-        .unwrap_or(usize::MAX);
 }
 pub fn part_two(input: &str) -> Option<usize> {
     Some(
@@ -169,8 +186,9 @@ pub fn part_two(input: &str) -> Option<usize> {
                     .split(",")
                     .map(|b| b.trim().parse::<i64>().unwrap())
                     .collect_vec();
+                let mut cooked_states = Default::default();
                 dbg!(&jiggle);
-                dfs2(&mut jiggle, &buttons, 1000, 0)
+                dbg!(dfs2(&mut jiggle, &buttons, 500, 0, &mut cooked_states).unwrap())
             })
             .sum(),
     )
