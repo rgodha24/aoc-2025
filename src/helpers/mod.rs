@@ -1,4 +1,5 @@
 mod direction;
+mod dsu;
 mod grid;
 mod point;
 
@@ -7,6 +8,7 @@ use std::{fmt::Debug, str::FromStr};
 
 pub use super::tiles;
 pub use direction::*;
+pub use dsu::*;
 pub use grid::*;
 pub use point::*;
 

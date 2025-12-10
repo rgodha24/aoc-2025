@@ -1,35 +1,7 @@
 advent_of_code::solution!(8);
-use std::collections::HashMap;
-
 use advent_of_code::helpers::*;
 use itertools::Itertools;
-
-struct UnionFind {
-    parent: Vec<usize>,
-}
-
-impl UnionFind {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect_vec(),
-        }
-    }
-    fn find(&mut self, x: usize) -> usize {
-        if self.parent[x] == x {
-            return x;
-        }
-        let p = self.find(self.parent[x]);
-        self.parent[x] = p;
-        p
-    }
-    fn union(&mut self, x: usize, y: usize) {
-        let x = self.find(x);
-        let y = self.find(y);
-        if x != y {
-            self.parent[x] = y;
-        }
-    }
-}
+use std::collections::HashMap;
 
 pub fn part_one(input: &str) -> Option<usize> {
     let points: Vec<(i64, i64, i64)> = input
@@ -53,49 +25,19 @@ pub fn part_one(input: &str) -> Option<usize> {
         })
         .collect_vec();
     connections.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-    let mut count = 0;
-    dbg!(&connections[..3]);
     let mut uf = UnionFind::new(points.len());
     let point_to_index: HashMap<_, _> = points.iter().enumerate().map(|(i, p)| (p, i)).collect();
 
-    for (distance, a, b) in connections {
-        count += 1;
-        if count > 1000 {
-            break;
-        }
-        if uf.find(point_to_index[a]) == uf.find(point_to_index[b]) {
-            // println!(
-            //     "skipping {:?}->{:?} because they are already connected",
-            //     a, b
-            // );
-            // dbg!(distance);
-
-            continue;
-        }
-
+    for (_, a, b) in connections.into_iter().take(1000) {
         uf.union(point_to_index[a], point_to_index[b]);
-        println!("connected {:?}->{:?}", a, b);
-        println!("their parent is now {:?}", uf.find(point_to_index[a]));
     }
+    // make sure parents are all updated
     for i in 0..points.len() {
         uf.find(i);
     }
-    // dbg!(&adj);
-    // dbg!(&adj.values().map(|v| v.len()).collect_vec());
-    dbg!(&count);
-    dbg!(&uf.parent);
-    dbg!(&uf.parent.iter().counts());
-    Some(
-        uf.parent
-            .iter()
-            .counts()
-            .values()
-            .into_iter()
-            .sorted()
-            .rev()
-            .take(3)
-            .product::<usize>(),
-    )
+    let mut counts = uf.counts();
+    counts.sort_unstable();
+    Some(counts.into_iter().rev().take(3).product::<usize>())
 }
 
 pub fn part_two(input: &str) -> Option<i64> {
@@ -120,7 +62,6 @@ pub fn part_two(input: &str) -> Option<i64> {
         })
         .collect_vec();
     connections.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-    dbg!(&connections[..3]);
     let mut uf = UnionFind::new(points.len());
     let point_to_index: HashMap<_, _> = points.iter().enumerate().map(|(i, p)| (p, i)).collect();
 
@@ -133,27 +74,14 @@ pub fn part_two(input: &str) -> Option<i64> {
         for i in 0..points.len() {
             uf.find(i);
         }
-        if uf.parent.iter().counts().len() == 1 {
+
+        let counts = uf.counts();
+        let first = counts[0];
+        if counts.into_iter().all(|x| x == first) {
             return Some(a.0 * b.0);
         }
     }
     unreachable!();
-    // dbg!(&adj);
-    // dbg!(&adj.values().map(|v| v.len()).collect_vec());
-    // dbg!(&count);
-    // dbg!(&uf.parent);
-    // dbg!(&uf.parent.iter().counts());
-    // Some(
-    //     uf.parent
-    //         .iter()
-    //         .counts()
-    //         .values()
-    //         .into_iter()
-    //         .sorted()
-    //         .rev()
-    //         .take(3)
-    //         .product::<usize>(),
-    // )
 }
 
 #[cfg(test)]

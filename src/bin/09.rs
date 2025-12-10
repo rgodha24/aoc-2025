@@ -1,5 +1,6 @@
 advent_of_code::solution!(9);
 use advent_of_code::helpers::*;
+use either::Either;
 use itertools::Itertools;
 
 tiles!('.' => Empty, 'X' => Green,  '#' => Red);
@@ -28,31 +29,24 @@ pub fn part_two(input: &str) -> Option<i64> {
     fn clip_edge(
         subject: Vec<SignedPoint>,
         is_inside: impl Fn(SignedPoint) -> bool,
-        get_intersection: impl Fn(SignedPoint) -> SignedPoint,
+        intersect: impl Fn(SignedPoint) -> SignedPoint,
     ) -> Vec<SignedPoint> {
-        let mut output = Vec::new();
-        if subject.is_empty() {
-            return output;
-        }
-
-        let mut s = *subject.last().unwrap();
-        for &e in &subject {
-            if is_inside(e) {
-                if !is_inside(s) {
-                    output.push(get_intersection(s));
-                }
-                output.push(e);
-            } else if is_inside(s) {
-                output.push(get_intersection(s));
-            }
-            s = e;
-        }
-        output
+        subject
+            .iter()
+            .copied()
+            .circular_tuple_windows()
+            .flat_map(|(s, e)| match (is_inside(s), is_inside(e)) {
+                (false, false) => Either::Left([].into_iter()),
+                (true, true) => Either::Right(Either::Left([e].into_iter())),
+                (true, false) => Either::Right(Either::Left([intersect(s)].into_iter())),
+                (false, true) => Either::Right(Either::Right([intersect(s), e].into_iter())),
+            })
+            .collect()
     }
 
     let ans = points
-        .iter()
-        .copied()
+        .clone()
+        .into_iter()
         .tuple_combinations()
         .filter_map(|(a, b)| {
             let minx = a.x.min(b.x);
