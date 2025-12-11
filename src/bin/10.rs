@@ -93,27 +93,14 @@ pub fn part_one(input: &str) -> Option<u64> {
             })
             .collect_vec();
 
-        // println!("initial={initial:b}");
-        // for button in buttons {
-        //     println!("button={button:b}");
-        // }
         let mut cache: FxHashMap<u64, _> = FxHashMap::default();
         let mut unreachable: FxHashSet<(u64, u64)> = FxHashSet::default();
 
-        // for max_depth in 5..10 {
-        //     dbg!(max_depth);
         let result = dfsp1(0, &buttons, goal, 0, 1000, &mut cache, &mut unreachable);
-        // dbg!(result);
         if let Some(result) = result {
             sum += result.get();
-            println!(
-                "found a solution at depth={} for input={line}",
-                result.get()
-            );
             continue 'outer;
         }
-        println!("didnt get a solution for input={line}");
-        // }
     }
     Some(sum)
 }
@@ -159,6 +146,7 @@ fn dfs2(
         .min()
 }
 pub fn part_two(input: &str) -> Option<usize> {
+    return None;
     Some(
         input
             .lines()
