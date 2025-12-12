@@ -42,8 +42,6 @@ fn dfs2<'a>(
     at: &'a str,
     visited: &mut HashSet<&'a str>,
     adj_list: &HashMap<&'a str, Vec<&'a str>>,
-    can_reach_fft: &HashSet<&'a str>,
-    can_reach_dac: &HashSet<&'a str>,
     cache: &mut HashMap<(&'a str, Vec<&'a str>), usize>,
     visited_dac: bool,
     visited_fft: bool,
@@ -55,23 +53,7 @@ fn dfs2<'a>(
         return *result;
     }
     if at == "out" {
-        // println!(
-        //     "reached the end with visited_len={} and visited_dac={} and visited_fft={}",
-        //     visited.len(),
-        //     visited_dac,
-        //     visited_fft
-        // );
-        if visited_dac && visited_fft {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-    if !visited_dac && !can_reach_dac.contains(at) {
-        return 0;
-    }
-    if !visited_fft && !can_reach_fft.contains(at) {
-        return 0;
+        return usize::from(visited_dac && visited_fft);
     }
 
     visited.insert(at);
@@ -85,8 +67,6 @@ fn dfs2<'a>(
                 to,
                 visited,
                 adj_list,
-                can_reach_fft,
-                can_reach_dac,
                 cache,
                 visited_dac || at == "dac",
                 visited_fft || at == "fft",
@@ -171,7 +151,7 @@ pub fn part_two(input: &str) -> Option<usize> {
         adj_list.insert(left, Vec::from_iter(right.split_whitespace()));
     }
 
-    dbg!(&adj_list.len());
+    // dbg!(&adj_list.len());
     // let mut can_reach_dac = HashSet::new();
     // let mut can_reach_fft = HashSet::new();
     // for left in adj_list.keys() {
@@ -188,7 +168,7 @@ pub fn part_two(input: &str) -> Option<usize> {
     let mut post_order = Vec::new();
     top_sort("svr", &adj_list, &mut HashSet::new(), &mut post_order);
     post_order.reverse();
-    dbg!(&post_order);
+    // dbg!(&post_order);
     let mut visited = vec![0; post_order.len()];
     visited[0] = 1;
     for (i, at) in post_order.iter().enumerate() {
@@ -222,15 +202,15 @@ pub fn part_two(input: &str) -> Option<usize> {
     let mut visited = HashSet::new();
     let mut cache = HashMap::new();
     let start = dfs3("svr", "fft", &mut visited, &mut cache, &adj_list);
-    dbg!(start);
+    // dbg!(start);
     let mut visited = HashSet::new();
     let mut cache = HashMap::new();
     let dac = dfs3("fft", "dac", &mut visited, &mut cache, &adj_list);
-    dbg!(dac);
+    // dbg!(dac);
     let mut visited = HashSet::new();
     let mut cache = HashMap::new();
     let out = dfs3("dac", "out", &mut visited, &mut cache, &adj_list);
-    dbg!(start, dac, out);
+    // dbg!(start, dac, out);
     // todo!();
     return Some(start * dac * out);
 
